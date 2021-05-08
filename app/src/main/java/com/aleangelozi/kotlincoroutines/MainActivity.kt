@@ -4,11 +4,10 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.aleangelozi.kotlincoroutines.databinding.ActivityMainBinding
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 private const val TAG = "MainActivity"
+private const val Coroutine = "Context"
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,6 +37,33 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.d(TAG, "Hi from thread ${Thread.currentThread().name}")
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // We can define different contexts for our Coroutines.
+        GlobalScope.launch(Dispatchers.Main) {
+            Log.i(Coroutine, "${Thread.currentThread().name} ")
+        }
+
+        GlobalScope.launch(Dispatchers.IO) {
+            Log.i(Coroutine, "${Thread.currentThread().name} ")
+
+            // Inside of a Coroutine we can define a new Coroutine context.
+            withContext(Dispatchers.Default) {
+
+                Log.d(Coroutine, "${doSomething()} in ${Thread.currentThread().name}")
+            }
+        }
+
+        GlobalScope.launch(Dispatchers.Default) {
+            Log.i(Coroutine, "${Thread.currentThread().name} ")
+        }
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            Log.i(Coroutine, "${Thread.currentThread().name} ")
+        }
     }
 
     // We also can create customized suspend functions.
