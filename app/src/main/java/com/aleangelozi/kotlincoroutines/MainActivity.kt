@@ -39,16 +39,30 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Hi from thread ${Thread.currentThread().name}")
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        Log.d(TAG, "overriding onStart")
+
+        // runBlocking blocks the Thread
+        runBlocking {
+            Log.d(TAG, "blocked for 5s before reach the onResume method.")
+            delay(5000L)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
 
+        Log.d(TAG, "overriding onResume")
+
         // We can define different contexts for our Coroutines.
         GlobalScope.launch(Dispatchers.Main) {
-            Log.i(Coroutine, "${Thread.currentThread().name} ")
+            Log.d(Coroutine, "${Thread.currentThread().name} ")
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            Log.i(Coroutine, "${Thread.currentThread().name} ")
+            Log.d(Coroutine, "${Thread.currentThread().name} ")
 
             // Inside of a Coroutine we can define a new Coroutine context.
             withContext(Dispatchers.Default) {
@@ -58,11 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         GlobalScope.launch(Dispatchers.Default) {
-            Log.i(Coroutine, "${Thread.currentThread().name} ")
+            Log.d(Coroutine, "${Thread.currentThread().name} ")
         }
 
         GlobalScope.launch(Dispatchers.Unconfined) {
-            Log.i(Coroutine, "${Thread.currentThread().name} ")
+            Log.d(Coroutine, "${Thread.currentThread().name} ")
         }
     }
 
