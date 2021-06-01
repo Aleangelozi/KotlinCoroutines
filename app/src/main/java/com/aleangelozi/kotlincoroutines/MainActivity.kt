@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.aleangelozi.kotlincoroutines.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
+import kotlin.system.measureTimeMillis
 
 private const val TAG = "MainActivity"
-private const val Coroutine = "Context"
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,75 +19,86 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        // All coroutines inside GlobalScope will live as long
-        // as the application (Main Thread) does. GlobalScope starts a new thread.
-        GlobalScope.launch {
+        // Coroutines are executed sequentially by default, but we can change
+        // in order to execute asynchronously.
 
-            // delay() will only suspend the current coroutine, not the whole thread.
-            delay(3000)
-            Log.d(TAG, "Coroutine says hi from thread ${Thread.currentThread().name}")
-
-            val doSomethingAnswer = doSomething()
-            val doSomethingAnswer2 = doSomething2()
-
-            Log.d(TAG, doSomethingAnswer)
-            Log.d(TAG, doSomethingAnswer2)
-
-
-        }
-
-        Log.d(TAG, "Hi from thread ${Thread.currentThread().name}")
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        Log.d(TAG, "overriding onStart")
-
-        // runBlocking blocks the Thread
-        runBlocking {
-            Log.d(TAG, "blocked for 5s before reach the onResume method.")
-            delay(5000L)
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        Log.d(TAG, "overriding onResume")
-
-        // We can define different contexts for our Coroutines.
-        GlobalScope.launch(Dispatchers.Main) {
-            Log.d(Coroutine, "${Thread.currentThread().name} ")
-        }
-
+        // Running sequentially
         GlobalScope.launch(Dispatchers.IO) {
-            Log.d(Coroutine, "${Thread.currentThread().name} ")
+            val time = measureTimeMillis {
+                val answer1 = networkCall1()
+                val answer2 = networkCall2()
 
-            // Inside of a Coroutine we can define a new Coroutine context.
-            withContext(Dispatchers.Default) {
-
-                Log.d(Coroutine, "${doSomething()} in ${Thread.currentThread().name}")
+                Log.d(TAG, "Answer1 is $answer1")
+                Log.d(TAG, "Answer2 is $answer2")
             }
+            Log.d(TAG, "First request took $time ms")
+
+
         }
 
-        GlobalScope.launch(Dispatchers.Default) {
-            Log.d(Coroutine, "${Thread.currentThread().name} ")
+        // Running asynchronously using Jobs.
+        // This is not recommended, it's better practice to use Async.
+        GlobalScope.launch(Dispatchers.IO) {
+            val time = measureTimeMillis {
+                lateinit var answer3: String
+                lateinit var answer4: String
+
+                val job1 = launch { answer3 = networkCall3() }
+                val job2 = launch { answer4 = networkCall4() }
+                job1.join()
+                job2.join()
+
+                Log.d(TAG, "Answer3 is $answer3")
+                Log.d(TAG, "Answer4 is $answer4")
+            }
+            Log.d(TAG, "Second request took $time ms")
         }
 
-        GlobalScope.launch(Dispatchers.Unconfined) {
-            Log.d(Coroutine, "${Thread.currentThread().name} ")
+
+        // Running asynchronously using Async.
+        GlobalScope.launch(Dispatchers.IO) {
+            val time = measureTimeMillis {
+
+
+                val answer5 = async { networkCall5() }
+                val answer6 = async {networkCall6() }
+
+                Log.d(TAG, "Answer3 is ${answer5.await()}")
+                Log.d(TAG, "Answer4 is ${answer6.await()}")
+            }
+            Log.d(TAG, "Second request took $time ms")
         }
     }
 
-    // We also can create customized suspend functions.
-    private suspend fun doSomething(): String {
-        delay(3000)
-        return "This is the answer from doSomething."
+    private suspend fun networkCall1(): String {
+        delay(3000L)
+        return "Answer 1"
     }
 
-    private suspend fun doSomething2(): String {
-        delay(3000)
-        return "This is the answer from doSomething2."
+    private suspend fun networkCall2(): String {
+        delay(3000L)
+        return "Answer 2"
     }
+
+    private suspend fun networkCall3(): String {
+        delay(3000L)
+        return "Answer 3"
+    }
+
+    private suspend fun networkCall4(): String {
+        delay(3000L)
+        return "Answer 4"
+    }
+
+    private suspend fun networkCall5(): String {
+        delay(3000L)
+        return "Answer 5"
+    }
+
+    private suspend fun networkCall6(): String {
+        delay(3000L)
+        return "Answer 6"
+    }
+
+
 }
